@@ -1,0 +1,101 @@
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+:root {
+  /* Brand Colors - "Trust Indigo" */
+  --primary: #4f46e5; 
+  --primary-hover: #4338ca;
+  --bg-body: #f8fafc; /* Slate-50 */
+  --sidebar-bg: #1e293b; /* Slate-800 */
+  --text-main: #334155;
+  
+  /* The "Glass" Effect Variables */
+  --glass-bg: rgba(255, 255, 255, 0.95);
+  --glass-border: 1px solid rgba(226, 232, 240, 0.8);
+  --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+body {
+  background-color: var(--bg-body);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: var(--text-main);
+  overflow-x: hidden;
+}
+
+/* --- 1. Component Overrides --- */
+
+/* Cards: Float and Clean */
+.card {
+  border: none;
+  border-radius: 16px; /* Softer corners */
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--card-shadow);
+}
+
+/* Buttons: Modern & Punchy */
+.btn-primary {
+  background-color: var(--primary);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  box-shadow: 0 4px 6px rgba(79, 70, 229, 0.25);
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(79, 70, 229, 0.35);
+}
+
+/* Sidebar Styling */
+.sidebar-wrapper {
+  min-height: 100vh;
+  transition: all 0.3s ease;
+  background-color: var(--sidebar-bg);
+  z-index: 1000;
+}
+
+.nav-link {
+  color: #94a3b8; /* Slate-400 */
+  padding: 12px 20px;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s;
+}
+
+.nav-link:hover {
+  background-color: rgba(255,255,255,0.05);
+  color: white;
+}
+
+.nav-link.active {
+  background-color: var(--primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+}
+
+/* Search Bar "Magic" Input */
+.search-input {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  width: 250px;
+  transition: all 0.3s;
+}
+.search-input:focus {
+  background: white;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  outline: none;
+}

@@ -33,5 +33,5 @@ app.use('/api/settings', require('./routes/settingRoutes'));
 app.get('/', (req, res) => res.send('API is running...'));
 
 // 7. Start Server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.FRONTEND_URL || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

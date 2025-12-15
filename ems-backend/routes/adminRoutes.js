@@ -1,16 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const { protect, admin } = require('../middleware/authMiddleware');
-const { getUsers, createUser, updateUser, deleteUser } = require('../controllers/adminController');
+const { getUsers, addUser, deleteUser, getDashboardStats } = require('../controllers/adminController');
 
-// Route for /api/admin/users
-router.route('/users')
-    .get(protect, admin, getUsers)    // Get all users
-    .post(protect, admin, createUser); // Add new user
+// User Management
+router.get('/users', protect, admin, getUsers);
+router.post('/users/add', protect, admin, addUser); // Matches the frontend call
+router.delete('/users/:id', protect, admin, deleteUser);
 
-// Route for /api/admin/users/:id
-router.route('/users/:id')
-    .put(protect, admin, updateUser)     // Update user details
-    .delete(protect, admin, deleteUser); // Delete user
+// Dashboard Data
+router.get('/dashboard', protect, admin, getDashboardStats);
 
 module.exports = router;

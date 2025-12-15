@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, CheckCircle } from 'lucide-react';
@@ -6,31 +6,50 @@ import { useAuth } from '../auth/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth(); // Using the Real Context now
+  const { login, user } = useAuth(); // Get user from context
   
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'admin') {
+        navigate('/admin');
+      } else if (user.role === 'manager') {
+        navigate('/manager');
+      } else {
+        navigate('/employee');
+      }
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      await login(formData.email, formData.password);
-      // Determine Redirect based on Role (Optional, or just go to portal)
-      // Since PortalLayout handles the views based on role, we just go to specific paths
-      // But purely for UX, let's look at the stored user or let the router handle it.
-      // For now, let's redirect to the Employee path, and the Sidebar will auto-adjust.
+      const success = await login(formData.email, formData.password);
       
-      // Better Logic:
-      const user = JSON.parse(localStorage.getItem('user'));
-      if(user.role === 'admin') navigate('/admin');
-      else if(user.role === 'manager') navigate('/manager');
-      else navigate('/employee');
+      if (success) {
+        // Small delay to ensure state is updated
+        setTimeout(() => {
+          const userData = JSON.parse(localStorage.getItem('user'));
+          
+          // Navigate based on user role
+          if (userData?.role === 'admin') {
+            navigate('/admin');
+          } else if (userData?.role === 'manager') {
+            navigate('/manager');
+          } else {
+            navigate('/employee');
+          }
+        }, 100);
+      }
       
     } catch (err) {
       // Error is handled by toast in AuthContext
-      console.error(err);
+      console.error('Login error:', err);
     } finally {
       setIsLoading(false);
     }

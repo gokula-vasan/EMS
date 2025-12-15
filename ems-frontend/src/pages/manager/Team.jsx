@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Loader } from 'lucide-react';
+import { Mail, Loader, ExternalLink } from 'lucide-react'; // Added ExternalLink icon
 import API from '../../utils/axiosHelper';
 import toast from 'react-hot-toast';
 
@@ -58,12 +58,14 @@ const Team = () => {
                     </div>
 
                     <div className="d-flex gap-2 mt-auto">
-                       {/* 👇 This is the dynamic email redirection */}
+                       {/* 👇 FIXED: Force open Gmail Compose Window */}
                        <a 
-                          href={`mailto:${emp.email}`} 
+                          href={`https://mail.google.com/mail/?view=cm&fs=1&to=${emp.email}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
                           className="btn btn-outline-primary flex-grow-1 d-flex align-items-center justify-content-center gap-2"
                        >
-                          <Mail size={16}/> Contact
+                          <Mail size={16}/> Email via Gmail
                        </a>
                     </div>
                  </div>

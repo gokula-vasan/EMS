@@ -1,86 +1,116 @@
 const User = require('../models/User');
+const Payroll = require('../models/Payroll');
+const Leave = require('../models/Leave');
+const AuditLog = require('../models/AuditLog');
+const bcrypt = require('bcryptjs');
 
 // @desc    Get all users
 // @route   GET /api/admin/users
-// @access  Private/Admin
 const getUsers = async (req, res) => {
-    // Return all users but exclude passwords
-    const users = await User.find({}).select('-password');
-    res.json(users);
+    try {
+        const users = await User.find({}).select('-password');
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error fetching users' });
+    }
 };
 
-// @desc    Create a new User (Onboarding)
-// @route   POST /api/admin/users
-// @access  Private/Admin
-const createUser = async (req, res) => {
-    const { name, email, password, role, department } = req.body;
+// @desc    Add new user
+// @route   POST /api/admin/users/add
+const addUser = async (req, res) => {
+    try {
+        const { name, email, password, role, department } = req.body;
 
-    // Check if user already exists
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-        return res.status(400).json({ message: 'User already exists' });
-    }
+        const userExists = await User.findOne({ email });
+        if (userExists) {
+            return res.status(400).json({ message: 'User already exists' });
+        }
 
-    // Create user (Password hashing is handled in User model pre-save hook)
-    const user = await User.create({
-        name,
-        email,
-        password,
-        role,
-        department
-    });
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password || '123456', salt);
 
-    if (user) {
-        res.status(201).json({
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            department: user.department
+        const user = await User.create({
+            name,
+            email,
+            password: hashedPassword,
+            role,
+            department: department || 'General'
         });
-    } else {
-        res.status(400).json({ message: 'Invalid user data' });
+
+        // 📝 Create Audit Log
+        await AuditLog.create({
+            action: 'User Onboarded',
+            details: `Added ${role}: ${email}`,
+            performedBy: req.user.name
+        });
+
+        res.status(201).json(user);
+
+    } catch (error) {
+        console.error("AddUser Error:", error);
+        res.status(500).json({ message: 'Server Error adding user' });
     }
 };
 
-// @desc    Update User (Promote/Demote/Edit)
-// @route   PUT /api/admin/users/:id
-// @access  Private/Admin
-const updateUser = async (req, res) => {
-    const user = await User.findById(req.params.id);
+// @desc    Delete User
+// @route   DELETE /api/admin/users/:id
+const deleteUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (user) {
+            await user.deleteOne();
+            
+            // 📝 Create Audit Log
+            await AuditLog.create({
+                action: 'User Removed',
+                details: `Deleted user: ${user.email}`,
+                performedBy: req.user.name
+            });
 
-    if (user) {
-        user.name = req.body.name || user.name;
-        user.email = req.body.email || user.email;
-        user.role = req.body.role || user.role;
-        user.department = req.body.department || user.department;
+            res.json({ message: 'User removed' });
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error deleting user' });
+    }
+};
 
-        const updatedUser = await user.save();
+// @desc    Get Full Admin Dashboard Data
+// @route   GET /api/admin/dashboard
+const getDashboardStats = async (req, res) => {
+    try {
+        // 1. User Counts
+        const totalEmployees = await User.countDocuments({ role: 'employee' });
+        const admins = await User.countDocuments({ role: 'admin' });
+
+        // 2. Financials
+        const payrolls = await Payroll.find({});
+        const totalPayroll = payrolls.reduce((acc, curr) => acc + curr.netPay, 0);
+
+        // 3. System Alerts
+        const pendingLeaves = await Leave.countDocuments({ status: 'Pending' });
+        const alerts = [];
+        if (pendingLeaves > 0) alerts.push(`${pendingLeaves} Leave Request(s) Pending Review`);
+        if (totalEmployees === 0) alerts.push("System Empty: No Employees Found");
+        
+        // 4. Recent Logs
+        const logs = await AuditLog.find().sort({ createdAt: -1 }).limit(5);
 
         res.json({
-            _id: updatedUser._id,
-            name: updatedUser.name,
-            email: updatedUser.email,
-            role: updatedUser.role,
-            department: updatedUser.department
+            stats: {
+                totalEmployees,
+                totalPayroll,
+                adminsCount: admins
+            },
+            alerts,
+            logs
         });
-    } else {
-        res.status(404).json({ message: 'User not found' });
+
+    } catch (error) {
+        console.error("Dashboard Stats Error:", error);
+        res.status(500).json({ message: 'Server Error loading dashboard' });
     }
 };
 
-// @desc    Delete User (Offboarding)
-// @route   DELETE /api/admin/users/:id
-// @access  Private/Admin
-const deleteUser = async (req, res) => {
-    const user = await User.findById(req.params.id);
-
-    if (user) {
-        await user.deleteOne();
-        res.json({ message: 'User removed' });
-    } else {
-        res.status(404).json({ message: 'User not found' });
-    }
-};
-
-module.exports = { getUsers, createUser, updateUser, deleteUser };
+module.exports = { getUsers, addUser, deleteUser, getDashboardStats };
